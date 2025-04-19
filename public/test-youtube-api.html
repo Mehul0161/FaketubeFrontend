@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube API Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    button:hover {
+      background-color: #3367d6;
+    }
+    .result {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>YouTube API Test</h1>
+  
+  <div>
+    <label for="apiKey">API Key:</label>
+    <input type="text" id="apiKey" style="width: 300px;" value="AIzaSyClA8cbACL1riJ0reOgmt1YjDyQYfyeBec">
+  </div>
+  
+  <div style="margin-top: 20px;">
+    <button id="testSearch">Test Search API</button>
+    <button id="testVideoDetails">Test Video Details API</button>
+  </div>
+  
+  <div id="result" class="result">
+    <p>Results will appear here...</p>
+  </div>
+  
+  <script>
+    const apiKeyInput = document.getElementById('apiKey');
+    const testSearchBtn = document.getElementById('testSearch');
+    const testVideoDetailsBtn = document.getElementById('testVideoDetails');
+    const resultDiv = document.getElementById('result');
+    
+    testSearchBtn.addEventListener('click', async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        resultDiv.innerHTML = '<p style="color: red;">Please enter an API key</p>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<p>Testing Search API...</p>';
+      
+      try {
+        const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=test&key=${apiKey}`;
+        console.log('Testing search endpoint:', searchUrl);
+        
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+        
+        if (data.error) {
+          resultDiv.innerHTML = `<pre>Error: ${JSON.stringify(data.error, null, 2)}</pre>`;
+        } else {
+          resultDiv.innerHTML = `
+            <h3>Search API Test Successful!</h3>
+            <p>Found video: ${data.items[0]?.snippet?.title || 'No video found'}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<pre>Error: ${error.message}</pre>`;
+      }
+    });
+    
+    testVideoDetailsBtn.addEventListener('click', async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        resultDiv.innerHTML = '<p style="color: red;">Please enter an API key</p>';
+        return;
+      }
+      
+      resultDiv.innerHTML = '<p>Testing Video Details API...</p>';
+      
+      try {
+        // First get a video ID
+        const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=test&key=${apiKey}`;
+        const searchResponse = await fetch(searchUrl);
+        const searchData = await searchResponse.json();
+        
+        if (searchData.error) {
+          resultDiv.innerHTML = `<pre>Search Error: ${JSON.stringify(searchData.error, null, 2)}</pre>`;
+          return;
+        }
+        
+        const videoId = searchData.items[0]?.id?.videoId;
+        if (!videoId) {
+          resultDiv.innerHTML = '<p>No video found to test details API</p>';
+          return;
+        }
+        
+        // Then get video details
+        const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${apiKey}`;
+        console.log('Testing video details endpoint:', detailsUrl);
+        
+        const detailsResponse = await fetch(detailsUrl);
+        const detailsData = await detailsResponse.json();
+        
+        if (detailsData.error) {
+          resultDiv.innerHTML = `<pre>Details Error: ${JSON.stringify(detailsData.error, null, 2)}</pre>`;
+        } else {
+          resultDiv.innerHTML = `
+            <h3>Video Details API Test Successful!</h3>
+            <p>Video: ${detailsData.items[0]?.snippet?.title || 'No details found'}</p>
+            <pre>${JSON.stringify(detailsData, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<pre>Error: ${error.message}</pre>`;
+      }
+    });
+  </script>
+</body>
+</html> 
